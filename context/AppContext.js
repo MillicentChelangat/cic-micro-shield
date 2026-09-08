@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
 
 const STORAGE_KEY = 'cic-micro-shield-state-v1';
 
@@ -58,9 +60,123 @@ const initialState = {
 
 const AppContext = createContext(null);
 
+function mapAuthUser(authUser) {
+  if (!authUser) return null;
+
+  return {
+    id: authUser.id,
+    name: authUser.user_metadata?.full_name || 'CIC customer',
+    email: authUser.email || '',
+    nationalId: authUser.user_metadata?.national_id || '',
+  };
+}
+
+function mapPolicyRow(row) {
+  return {
+    id: row.id,
+    planId: row.plan_id,
+    name: row.name,
+    category: row.category,
+    premium: row.premium,
+    frequency: row.frequency,
+    status: row.status,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    member: row.member,
+    benefits: Array.isArray(row.benefits) ? row.benefits : [],
+  };
+}
+
+function buildClaimTimeline(status, createdAt, updatedAt) {
+  const submittedDate = createdAt
+    ? createdAt.slice(0, 10)
+    : 'Pending';
+
+  const reviewComplete = ['In Review', 'Approved', 'Rejected'].includes(status);
+  const decisionComplete = ['Approved', 'Rejected'].includes(status);
+
+  const reviewDate = reviewComplete
+    ? updatedAt?.slice(0, 10) || 'Pending'
+    : 'Pending';
+
+  const decisionDate = decisionComplete
+    ? updatedAt?.slice(0, 10) || 'Pending'
+    : 'Pending';
+
+  return [
+    {
+      label: 'Claim submitted',
+      date: submittedDate,
+      complete: true,
+    },
+    {
+      label: 'CIC team reviewing',
+      date: reviewDate,
+      complete: reviewComplete,
+    },
+    {
+      label: 'Decision shared',
+      date: decisionDate,
+      complete: decisionComplete,
+    },
+  ];
+}
+
+function mapClaimRow(row) {
+  return {
+    id: row.id,
+    policyId: row.policy_id,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    createdAt: row.created_at?.slice(0, 10),
+    updatedAt: row.updated_at?.slice(0, 10),
+    photoUri: row.photo_path || null,
+    timeline: buildClaimTimeline(
+      row.status,
+      row.created_at,
+      row.updated_at,
+    ),
+  };
+}
+
+async function loadPolicies(authUser) {
+  if (!authUser) return [];
+
+  const { data, error } = await supabase
+    .from('policies')
+    .select('*')
+    .eq('user_id', authUser.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map(mapPolicyRow);
+}
+
+async function loadClaims(authUser) {
+  if (!authUser) return [];
+
+  const { data, error } = await supabase
+    .from('claims')
+    .select('*')
+    .eq('user_id', authUser.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map(mapClaimRow);
+}
+
+function formatDatabaseDate(date) {
+  return date.toISOString().slice(0, 10);
+}
+
 export function AppProvider({ children }) {
   const [state, setState] = useState(initialState);
-  const [hydrated, setHydrated] = useState(false);
+  const [localHydrated, setLocalHydrated] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const hydrated = localHydrated && authReady;
 
   useEffect(() => {
     let active = true;
@@ -69,15 +185,15 @@ export function AppProvider({ children }) {
         if (!active) return;
         if (stored) {
           try {
-            setState({ ...initialState, ...JSON.parse(stored) });
+            setState({ ...initialState, ...JSON.parse(stored), user: null, });
           } catch {
             setState(initialState);
           }
         }
-        setHydrated(true);
+        setLocalHydrated(true);
       })
       .catch(() => {
-        if (active) setHydrated(true);
+        if (active) setLocalHydrated(true);
       });
     return () => {
       active = false;
@@ -85,59 +201,189 @@ export function AppProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
-    }
-  }, [state, hydrated]);
+    let active = true;
+
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        if (!active) return;
+
+        const [policies, claims] = await Promise.all([ loadPolicies(session?.user), loadClaims(session?.user),]);
+
+        setState((current) => ({
+          ...current,
+          user: mapAuthUser(session?.user),
+          policies,
+          claims,
+        }));
+
+        setAuthReady(true);
+      })
+      .catch(() => {
+        if (!active) return;
+
+        setState((current) => ({
+          ...current,
+          user: null,
+          policies: [],
+          claims: [],
+        }));
+
+        setAuthReady(true);
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setState((current) => ({
+        ...current,
+        user: mapAuthUser(session?.user),
+      }));
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (localHydrated) { AsyncStorage.setItem( STORAGE_KEY, JSON.stringify({ ...state, user: null,}), ).catch(() => {}); }
+  }, [state, localHydrated]);
 
   const actions = useMemo(
     () => ({
-      signIn: (phone) =>
+    signIn: async (email, password) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      const [policies, claims] = await Promise.all([ loadPolicies(data.session?.user), loadClaims(data.session?.user),]);
+
+      setState((current) => ({
+        ...current,
+        user: mapAuthUser(data.session?.user),
+        policies,
+        claims,
+      }));
+
+      return data;
+    },
+
+    register: async (name, nationalId, email, password) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            national_id: nationalId,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      setState((current) => ({
+        ...current,
+        user: mapAuthUser(data.session?.user),
+        policies: [],
+        claims: [],
+      }));
+
+      return data;
+    },
+
+    signOut: async () => {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) throw error;
+
+      setState((current) => ({
+        ...current,
+        user: null,
+        policies: [],
+        claims: [],
+      }));
+    },
+      addPolicy: async (plan) => {
+        if (!state.user?.id) {
+          throw new Error('You must be signed in to activate a policy.');
+        }
+
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + 1);
+
+        const policyId = `POL-${Date.now().toString().slice(-6)}`;
+
+        const { data, error } = await supabase
+          .from('policies')
+          .insert({
+            id: policyId,
+            user_id: state.user.id,
+            plan_id: plan.id,
+            name: plan.name,
+            category: plan.category,
+            premium: plan.premium,
+            frequency: 'Annual',
+            status: 'Active',
+            start_date: formatDatabaseDate(startDate),
+            end_date: formatDatabaseDate(endDate),
+            member: `CIC-${policyId.slice(-6)}-KE`,
+            benefits: plan.benefits,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const savedPolicy = mapPolicyRow(data);
+
         setState((current) => ({
           ...current,
-          user: { name: current.user?.name || 'Samuel Kamau', phone },
-        })),
-      register: (name, phone) =>
-        setState((current) => ({
-          ...current,
-          user: { name, phone },
-        })),
-      signOut: () => setState((current) => ({ ...current, user: null })),
-      addPolicy: (plan) => {
-        const policy = {
-          id: `POL-${Date.now().toString().slice(-6)}`,
-          planId: plan.id,
-          name: plan.name,
-          category: plan.category,
-          premium: plan.premium,
-          frequency: 'Annual',
-          status: 'Active',
-          startDate: '02 Sep 2026',
-          endDate: '02 Sep 2027',
-          member: 'CIC-NEW-KE',
-          benefits: plan.benefits,
-        };
-        setState((current) => ({ ...current, policies: [policy, ...current.policies] }));
-        return policy;
+          policies: [savedPolicy, ...current.policies],
+        }));
+
+        return savedPolicy;
       },
-      addClaim: ({ policyId, description, photoUri }) => {
-        const claim = {
-          id: `CLM-${Date.now().toString().slice(-4)}`,
-          policyId,
-          title: 'New accident claim',
-          description,
-          status: 'Pending',
-          createdAt: '02 Sep 2026',
-          updatedAt: '02 Sep 2026',
+      addClaim: async ({ policyId, description, photoUri }) => {
+        if (!state.user?.id) {
+          throw new Error('You must be signed in to submit a claim.');
+        }
+
+        const claimId = `CLM-${Date.now().toString().slice(-6)}`;
+
+        const { data, error } = await supabase
+          .from('claims')
+          .insert({
+            id: claimId,
+            user_id: state.user.id,
+            policy_id: policyId,
+            title: 'New accident claim',
+            description,
+            status: 'Pending',
+            photo_path: null,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const savedClaim = {
+          ...mapClaimRow(data),
           photoUri: photoUri || null,
-          timeline: [
-            { label: 'Claim submitted', date: '02 Sep 2026', complete: true },
-            { label: 'CIC team reviewing', date: 'Pending', complete: false },
-            { label: 'Decision shared', date: 'Pending', complete: false },
-          ],
         };
-        setState((current) => ({ ...current, claims: [claim, ...current.claims] }));
-        return claim;
+
+        setState((current) => ({
+          ...current,
+          claims: [savedClaim, ...current.claims],
+        }));
+
+        return savedClaim;
       },
       advanceClaim: (claimId) =>
         setState((current) => ({
@@ -165,10 +411,10 @@ export function AppProvider({ children }) {
           }),
         })),
     }),
-    [],
+    [state.user],
   );
 
-  const value = useMemo(() => ({ ...state, hydrated, ...actions }), [state, hydrated, actions]);
+  const value = useMemo(() => ({ ...state, hydrated, ...actions }), [state, localHydrated, actions]);
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 

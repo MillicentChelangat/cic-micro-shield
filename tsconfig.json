@@ -1,7 +1,6 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "baseUrl": ".",
     "strict": true,
     "paths": {
       "@/*": [
@@ -15,9 +14,10 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],
-  "references": [
-    {
-      "path": "../../lib/api-client-react"
-    }
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
   ]
 }
