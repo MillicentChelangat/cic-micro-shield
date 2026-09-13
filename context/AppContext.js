@@ -309,7 +309,7 @@ export function AppProvider({ children }) {
         claims: [],
       }));
     },
-      addPolicy: async (plan) => {
+     addPolicy: async (plan) => {
         if (!state.user?.id) {
           throw new Error('You must be signed in to activate a policy.');
         }
@@ -385,6 +385,24 @@ export function AppProvider({ children }) {
 
         return savedClaim;
       },
+      
+      uploadClaimPhoto: async (localUri) => {
+        const response = await fetch(localUri);
+        const blob = await response.blob();
+        const fileExt = localUri.split('.').pop();
+        const fileName = `${state.user.id}/${Date.now()}.${fileExt}`;
+
+        const { error } = await supabase.storage
+          .from('claim-photos')
+          .upload(fileName, blob, { contentType: `image/${fileExt}` });
+
+        if (error) throw error;
+
+        const { data } = supabase.storage.from('claim-photos').getPublicUrl(fileName);
+        return data.publicUrl;
+      },
+
+
       advanceClaim: (claimId) =>
         setState((current) => ({
           ...current,

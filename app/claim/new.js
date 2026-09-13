@@ -13,7 +13,7 @@ export default function NewClaimScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { policyId } = useLocalSearchParams();
-  const { policies, addClaim } = useApp();
+  const { policies, addClaim, uploadClaimPhoto } = useApp();
   const [selectedPolicy, setSelectedPolicy] = useState(policyId || policies[0]?.id || '');
   const [description, setDescription] = useState('');
   const [photoUri, setPhotoUri] = useState(null);
@@ -41,10 +41,15 @@ export default function NewClaimScreen() {
     setSubmitting(true);
 
     try {
+    let uploadedPhotoUrl = null;
+    if (photoUri) {
+      uploadedPhotoUrl = await uploadClaimPhoto(photoUri);
+    }
+
       const claim = await addClaim({
         policyId: selectedPolicy,
         description: description.trim(),
-        photoUri,
+        photoUri: uploadedPhotoUrl,
       });
 
       router.replace(`/claim/${claim.id}`);

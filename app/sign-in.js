@@ -113,7 +113,7 @@ export default function SignInScreen() {
           <Field
             label="Email address"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => { setEmail(text); setAuthError(''); }}
             placeholder="e.g. customer@example.com"
             error={errors.email}
             keyboardType="email-address"
@@ -122,10 +122,10 @@ export default function SignInScreen() {
           <Field
             label="Password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => { setPassword(text); setAuthError(''); }}
             placeholder="At least 8 characters"
             error={errors.password}
-            secureTextEntry
+            isPassword
           />
 
           {mode === 'register' && (
@@ -135,7 +135,7 @@ export default function SignInScreen() {
               onChangeText={setConfirmPassword}
               placeholder="Repeat your password"
               error={errors.confirmPassword}
-              secureTextEntry
+              isPassword
             />
           )}
         </View>
@@ -143,7 +143,8 @@ export default function SignInScreen() {
         <PrimaryButton title={ busy ? 'Please wait...' : mode === 'signIn' ? 'Sign in securely' : 'Create my account' } onPress={submit} disabled={busy} />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24, gap: 5 }}>
           <Text style={{ color: colors.mutedForeground, fontFamily: 'Inter_400Regular', fontSize: 13 }}>{mode === 'signIn' ? 'New to CIC Micro-Shield?' : 'Already have an account?'}</Text>
-          <Pressable onPress={() => { setMode(mode === 'signIn' ? 'register' : 'signIn'); setErrors({}); }} accessibilityRole="button"><Text style={{ color: colors.primary, fontFamily: 'Inter_700Bold', fontSize: 13 }}>{mode === 'signIn' ? 'Create account' : 'Sign in'}</Text></Pressable>
+          <Pressable onPress={() => { setMode(mode === 'signIn' ? 'register' : 'signIn'); setErrors({}); setAuthError(''); }} accessibilityRole="button">
+            <Text style={{ color: colors.primary, fontFamily: 'Inter_700Bold', fontSize: 13 }}>{mode === 'signIn' ? 'Create account' : 'Sign in'}</Text></Pressable>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 27 }}>
           <Feather name="lock" size={13} color={colors.success} />

@@ -74,14 +74,28 @@ export function SecondaryButton({ title, onPress, icon }) {
   );
 }
 
-export function Field({ label, value, onChangeText, placeholder, error, secureTextEntry, keyboardType = 'default', maxLength, multiline }) {
+export function Field({ label, value, onChangeText, placeholder, error, secureTextEntry, keyboardType = 'default', maxLength, multiline, isPassword = false }) {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const hideText = isPassword ? !showPassword : secureTextEntry;
   const colors = useColors();
   return (
-    <View style={styles.fieldWrap}>
-      <Text style={[styles.fieldLabel, { color: colors.inkSoft }]}>{label}</Text>
-      <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} secureTextEntry={secureTextEntry} keyboardType={keyboardType} maxLength={maxLength} multiline={multiline} textAlignVertical={multiline ? 'top' : 'center'} autoCapitalize="none" style={[styles.field, { color: colors.foreground, backgroundColor: colors.card, borderColor: error ? colors.primary : colors.input }, multiline && styles.multilineField]} accessibilityLabel={label} />
-      {!!error && <Text style={[styles.fieldError, { color: colors.primary }]}>{error}</Text>}
+  <View style={styles.fieldWrap}>
+    <Text style={[styles.fieldLabel, { color: colors.inkSoft }]}>{label}</Text>
+    <View style={{ position: 'relative' }}>
+      <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} secureTextEntry={hideText} keyboardType={keyboardType} maxLength={maxLength} multiline={multiline} textAlignVertical={multiline ? 'top' : 'center'} autoCapitalize="none" style={[styles.field, { color: colors.foreground, backgroundColor: colors.card, borderColor: error ? colors.primary : colors.input }, multiline && styles.multilineField, isPassword && { paddingRight: 46 }]} accessibilityLabel={label} /> 
+      {isPassword && (
+        <Pressable
+          onPress={() => setShowPassword((current) => !current)}
+          accessibilityRole="button"
+          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+          style={{ position: 'absolute', right: 14, top: 0, height: 52, justifyContent: 'center' }}
+          >
+          <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={colors.mutedForeground} />
+        </Pressable>
+        )}   
     </View>
+      {!!error && <Text style={[styles.fieldError, { color: colors.primary }]}>{error}</Text>}
+  </View>
   );
 }
 
