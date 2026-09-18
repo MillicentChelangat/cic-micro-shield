@@ -85,7 +85,7 @@ export default function SignInScreen() {
     <KeyboardAwareScrollViewCompat bottomOffset={70} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 42, paddingBottom: insets.bottom + 28, paddingHorizontal: 24, flexGrow: 1, backgroundColor: colors.background }}>
       <View style={{ flex: 1 }}>
         <BrandMark />
-        <Text style={{ color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 34, lineHeight: 39, letterSpacing: -1.2, marginTop: 28, maxWidth: 310 }}>{mode === 'signIn' ? 'Cover for the life you’re building.' : 'Start your protection journey.'}</Text>
+        <Text style={{ color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 27, lineHeight: 39, letterSpacing: -1.2, marginTop: 28, maxWidth: 310 }}>{mode === 'signIn' ? 'Cover for the life you’re building.' : 'Start your protection journey.'}</Text>
         <Text style={{ color: colors.mutedForeground, fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 22, marginTop: 13, maxWidth: 325 }}>{mode === 'signIn' ? 'Simple, affordable insurance for the moments that matter.' : 'Create your CIC Micro-Shield account in under a minute.'}</Text>
 
         <View style={{ marginTop: 38 }}>

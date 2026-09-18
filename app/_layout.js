@@ -8,13 +8,31 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, us
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppProvider } from '@/context/AppContext';
+import { useColors } from '@/hooks/useColors';
+import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
+
+
+function RootLayoutNav() {
+  const colors = useColors();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style= "light" />
+      <Stack screenOptions={{ headerShown: false, headerBackTitle: 'Back' }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="sign-in" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="cover" />
+        <Stack.Screen name="policy/[id]" />
+        <Stack.Screen name="claim/new" />
+        <Stack.Screen name="claim/[id]" />
+      </Stack>
+    </View>
+  );
+}
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
-
-function RootLayoutNav() {
-  return <Stack screenOptions={{ headerShown: false, headerBackTitle: 'Back' }}><Stack.Screen name="index" /><Stack.Screen name="sign-in" /><Stack.Screen name="(tabs)" /><Stack.Screen name="cover" /><Stack.Screen name="policy/[id]" /><Stack.Screen name="claim/new" /><Stack.Screen name="claim/[id]" /></Stack>;
-}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });

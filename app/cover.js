@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
 import { PrimaryButton, Screen, TopBar } from '@/components/CicUI';
+import { PaymentSimulationModal } from '@/components/PaymentSimulationModal';
 
 const plans = [
   {
@@ -50,11 +51,13 @@ const plans = [
 
 export default function CoverScreen() {
   const colors = useColors();
-  const { addPolicy } = useApp();
+  const { addPolicy, confirmPolicyPayment } = useApp();
 
   const [selected, setSelected] = useState(plans[0].id);
   const [activating, setActivating] = useState(false);
   const [activationError, setActivationError] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pendingPolicyId, setPendingPolicyId] = useState(null);
 
   const selectedPlan = plans.find((plan) => plan.id === selected);
 
@@ -68,7 +71,8 @@ export default function CoverScreen() {
 
     try {
       const policy = await addPolicy(selectedPlan);
-      router.replace(`/policy/${policy.id}`);
+      setPendingPolicyId(policy.id);
+      setShowPaymentModal(true);
     } catch (error) {
       setActivationError(
         error?.message || 'We could not activate this cover.',
@@ -76,6 +80,21 @@ export default function CoverScreen() {
     } finally {
       setActivating(false);
     }
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      await confirmPolicyPayment(pendingPolicyId);
+      setShowPaymentModal(false);
+      router.replace(`/policy/${pendingPolicyId}`);
+    } catch (error) {
+      setActivationError(error?.message || 'We could not confirm your payment.');
+      setShowPaymentModal(false);
+    }
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
   };
 
   return (
@@ -275,6 +294,14 @@ export default function CoverScreen() {
           disabled={activating}
         />
       </View>
+      <PaymentSimulationModal
+        visible={showPaymentModal}
+        phoneNumber="0712 345 678"
+        amount={selectedPlan.premium}
+        onSuccess={handlePaymentSuccess}
+        onClose={handlePaymentCancel}
+      />
     </Screen>
+    
   );
 }

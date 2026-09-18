@@ -33,7 +33,7 @@ export default function ClaimsScreen() {
             justifyContent: 'center',
           }}
         >
-          <Feather name="headphones" size={18} color="#FFFFFF" />
+          <Feather name="activity" size={18} color="#FFFFFF" />
         </View>
 
         <View>

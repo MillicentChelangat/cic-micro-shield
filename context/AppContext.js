@@ -330,7 +330,7 @@ export function AppProvider({ children }) {
             category: plan.category,
             premium: plan.premium,
             frequency: 'Annual',
-            status: 'Active',
+            status: 'Pending Payment',
             start_date: formatDatabaseDate(startDate),
             end_date: formatDatabaseDate(endDate),
             member: `CIC-${policyId.slice(-6)}-KE`,
@@ -350,6 +350,30 @@ export function AppProvider({ children }) {
 
         return savedPolicy;
       },
+
+      confirmPolicyPayment: async (policyId) => {
+        const { data, error } = await supabase
+          .from('policies')
+          .update({ status: 'Active' })
+          .eq('id', policyId)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const updatedPolicy = mapPolicyRow(data);
+
+        setState((current) => ({
+          ...current,
+          policies: current.policies.map((policy) =>
+            policy.id === policyId ? updatedPolicy : policy
+          ),
+        }));
+
+        return updatedPolicy;
+      },
+
+
       addClaim: async ({ policyId, description, photoUri }) => {
         if (!state.user?.id) {
           throw new Error('You must be signed in to submit a claim.');
@@ -366,7 +390,7 @@ export function AppProvider({ children }) {
             title: 'New accident claim',
             description,
             status: 'Pending',
-            photo_path: null,
+            photo_path: photoUri,
           })
           .select()
           .single();

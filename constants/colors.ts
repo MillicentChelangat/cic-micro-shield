@@ -12,6 +12,8 @@
  * The useColors() hook will automatically pick it up.
  */
 
+import { Text } from "react-native-svg";
+
 const colors = {
   light: {
     // Legacy aliases (kept for backward compatibility)
@@ -56,6 +58,54 @@ const colors = {
     successSoft: '#E4F2EC',
     warningSoft: '#FFF3D6',
     dangerSoft: '#FDE8E8',
+    gold: '#FDB913',
+    
+
+  },
+
+  dark: {
+    // Legacy aliases (kept for backward compatibility)
+    text: '#F2EFE9',
+    tint: '#BF092F',
+
+    // Core surfaces
+    background: '#02090f',
+    foreground: '#F2EFE9',
+
+    // Cards / elevated surfaces
+    card: '#010a16',
+    cardForeground: '#F2EFE9',
+
+    // Primary action color (buttons, links, active states)
+    primary: '#790303',
+    primaryForeground: '#14151A',
+
+    // Secondary / less-emphasis interactive surfaces
+    secondary: '#262832',
+    secondaryForeground: '#F2EFE9',
+
+    // Muted / subdued elements (dividers, timestamps, placeholders)
+    muted: '#2E313C',
+    mutedForeground: '#9AA0AC',
+
+    // Accent highlights (badges, selected items, focus rings)
+    accent: '#f7b40d',
+    accentForeground: '#14151A',
+
+    // Destructive actions (delete, error states)
+    destructive: '#FF6B6B',
+    destructiveForeground: '#14151A',
+
+    // Borders and input outlines
+    border: '#33353F',
+    input: '#33353F',
+    navy: '#F2EFE9',
+    inkSoft: '#C4C8D0',
+    success: '#4ADE9C',
+    warning: '#FFC24B',
+    successSoft: '#1B3A2C',
+    warningSoft: '#3D2F13',
+    dangerSoft: '#3A1E1E',
     gold: '#FDB913',
   },
 

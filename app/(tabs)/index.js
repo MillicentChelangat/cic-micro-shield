@@ -20,7 +20,8 @@ export default function HomeScreen() {
             <Text style={{ color: colors.gold, fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 1.2 }}>YOUR SAFETY NET</Text>
             <Text style={{ color: '#FFFFFF', fontFamily: 'Inter_700Bold', fontSize: 25, lineHeight: 30, marginTop: 9, letterSpacing: -0.6 }}>Protection that keeps you moving.</Text>
           </View>
-          <View style={{ width: 43, height: 43, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}><Feather name="shield" size={22} color="#FFFFFF" /></View>
+          <View style={{ width: 43, height: 43, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+            <Feather name="shield" size={22} color="#FFFFFF" /></View>
         </View>
         <Text style={{ color: '#B9C1BD', fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19, marginTop: 15, maxWidth: 265 }}>Affordable cover for work, family, and the unexpected.</Text>
         <Pressable onPress={() => router.push('/cover')} accessibilityRole="button" style={({ pressed }) =>
@@ -47,11 +48,14 @@ export default function HomeScreen() {
       <SectionTitle title="Quick actions" />
       <View style={{ flexDirection: 'row', gap: 11, marginBottom: 26 }}>
         <Pressable onPress={() => router.push('/claim/new')} accessibilityRole="button" style={({ pressed }) => [{ flex: 1, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 15, opacity: pressed ? 0.72 : 1 }]}>
-          <View style={{ width: 35, height: 35, borderRadius: 12, backgroundColor: colors.dangerSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}><Feather name="file-plus" size={17} color={colors.primary} /></View>
+          <View style={{ width: 35, height: 35, borderRadius: 12, backgroundColor: colors.dangerSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
+            <Feather name="file-plus" size={17} color={colors.primary} /></View>
           <Text style={{ color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 13 }}>Report a claim</Text><Text style={{ color: colors.mutedForeground, fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 4 }}>We’re here to help</Text>
         </Pressable>
         <Pressable onPress={() => router.push('/cover')} accessibilityRole="button" style={({ pressed }) => [{ flex: 1, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 15, opacity: pressed ? 0.72 : 1 }]}>
-          <View style={{ width: 35, height: 35, borderRadius: 12, backgroundColor: colors.warningSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}><Feather name="plus-circle" size={17} color={colors.warning} /></View>
+          <View style={{ width: 35, height: 35, borderRadius: 12, backgroundColor: colors.warningSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
+            <Feather name="plus-circle" size={17} color={colors.warning} />
+          </View>
           <Text style={{ color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 13 }}>Get more cover</Text><Text style={{ color: colors.mutedForeground, fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 4 }}>From KSh 2,000/year</Text>
         </Pressable>
       </View>
